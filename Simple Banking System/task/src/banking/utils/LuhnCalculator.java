@@ -1,4 +1,4 @@
-package banking;
+package banking.utils;
 
 import java.util.Arrays;
 
@@ -26,15 +26,15 @@ public class LuhnCalculator {
         return control % 10 == 0 ? 0 : 10 - control % 10;
     }
 
-    public static int getCheckSum(String INN, int[] accNum) {
+    public static int getCheckSum(String inn, int[] accNum) {
         int[] concatNum = new int[accNum.length + 6];
 
-        int[] inn =
-                Arrays.stream(INN.split(""))
+        int[] innArr =
+                Arrays.stream(inn.split(""))
                     .mapToInt(Integer::parseInt)
                     .toArray();
 
-        System.arraycopy(inn, 0, concatNum, 0, 5);
+        System.arraycopy(innArr, 0, concatNum, 0, 5);
         System.arraycopy(accNum, 0, concatNum, 6, 9);
 
         return calculateCheckSum(calculateControlNumber(concatNum));

@@ -2,15 +2,19 @@ package banking.ui;
 
 import banking.entities.Account;
 import banking.repository.AccountRepository;
+import banking.service.AccountService;
 
 import java.util.Optional;
 import java.util.Scanner;
 
 public class Menu {
     private static final Scanner stdin = new Scanner(System.in);
+
     private final AccountRepository repository;
+    private final AccountService service;
 
     public Menu() {
+        this.service = new AccountService();
         this.repository = AccountRepository.getInstance();
     }
 
@@ -22,18 +26,11 @@ public class Menu {
                 choice = MainMenu.values()[Integer.parseInt(stdin.nextLine())];
                 switch (choice) {
                     case NEW:
-                        Account created = repository.createAccount();
-//                        System.out.println();
-//                        created.printDetails();
+//                        repository.createAccount();
+                        service.newAccount();
                         break;
                     case LOGIN:
-                        System.out.println("\nEnter your card number:");
-                        System.out.print(">");
-                        String cardNumber = stdin.nextLine();
-                        System.out.println("Enter your PIN:");
-                        System.out.print(">");
-                        String pinNumber = stdin.nextLine();
-                        Optional<Account> current = repository.readOne(cardNumber, pinNumber);
+                        Optional<Account> current = attemptLogin();
                         if (current.isPresent()) {
                             System.out.println("\nYou have successfully logged in!\n");
                             accountMenu(current.get());
@@ -72,5 +69,16 @@ public class Menu {
                 System.out.println("Inappropriate input");
             }
         }
+    }
+
+    private Optional<Account> attemptLogin() {
+        System.out.println("\nEnter your card number:");
+        System.out.print(">");
+        String cardNumber = stdin.nextLine();
+        System.out.println("Enter your PIN:");
+        System.out.print(">");
+        String pinNumber = stdin.nextLine();
+        return repository.readOne(cardNumber, pinNumber);
+//        return service.findAccount(cardNumber, pinNumber);
     }
 }

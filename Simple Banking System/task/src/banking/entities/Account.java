@@ -1,6 +1,6 @@
 package banking.entities;
 
-import banking.LuhnCalculator;
+import banking.utils.LuhnCalculator;
 
 import java.util.Arrays;
 import java.util.Random;
