@@ -53,23 +53,26 @@ public class AccountRepository {
 
 
     public Account createAccount() {
-        Account generatedAccount = Account.generateNewAccount();
-
+        int rowsAffected = 0;
         String sql = "INSERT INTO card (number, pin, balance) VALUES (?, ?, ?)";
-
-        try (Connection connection = DriverManager.getConnection(URL)) {
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, generatedAccount.getCardNumber());
-                statement.setString(2, generatedAccount.getPin());
-                statement.setInt(3, generatedAccount.getBalance());
-                statement.executeUpdate();
-                System.out.println("\nYour card has been created");
-                generatedAccount.printDetails();
+        Account generatedAccount = Account.generateNewAccount();
+        while (rowsAffected == 0) {
+            try (Connection connection = DriverManager.getConnection(URL)) {
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setString(1, generatedAccount.getCardNumber());
+                    statement.setString(2, generatedAccount.getPin());
+                    statement.setInt(3, generatedAccount.getBalance());
+                    rowsAffected = statement.executeUpdate();
+                    if (rowsAffected == 0) {
+                        generatedAccount = Account.generateNewAccount();
+                    }
+                    System.out.println("\nYour card has been created");
+                    generatedAccount.printDetails();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
         return generatedAccount;
     }
 
