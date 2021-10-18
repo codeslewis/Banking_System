@@ -1103,5 +1103,58 @@ files:
     }
   learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/518/implement#comment
-status: Unchecked
+status: Failed
+feedback:
+  message: |-
+    Wrong answer in test #10
+
+    Account balance int the database is wrong after adding income.
+    Expected 10000
+
+    Please find below the output of your program during this failed test.
+    Note that the &#39;&gt;&#39; character indicates the beginning of the input line.
+
+    ---
+
+    Arguments: -fileName card.s3db
+
+    0. Exit
+    1. Create an account
+    2. Log into account
+    &gt; 1
+
+    Your card has been created
+    Your card number:
+    4000001486878424
+    Your card PIN:
+    1872
+
+    0. Exit
+    1. Create an account
+    2. Log into account
+    &gt; 2
+
+    Enter your card number:
+    &gt;&gt; 4000001486878424
+    Enter your PIN:
+    &gt;&gt; 1872
+
+    You have successfully logged in!
+
+    0. Exit
+    1. Balance
+    2. Log out
+    &gt; 2
+    You have successfully logged out
+    0. Exit
+    1. Create an account
+    2. Log into account
+    &gt; 10000
+    Inappropriate input
+    0. Exit
+    1. Create an account
+    2. Log into account
+    &gt; 0
+    Bye!
+  time: Mon, 18 Oct 2021 08:29:08 UTC
 record: 4
