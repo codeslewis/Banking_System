@@ -1,102 +1,6 @@
 type: edu
 custom_name: stage4
 files:
-- name: src/banking/Main.java
-  visible: true
-  text: |-
-    package banking;
-
-    import java.util.Map;
-    import java.util.Scanner;
-
-    public class Main {
-        public static String url;
-
-        public static void main(String[] args) {
-            String fileName = "";
-            for (int i = 0; i < args.length; i++) {
-                if (i % 2 == 0 && args[i].equals("-fileName")) {
-                    fileName = args[i + 1];
-                    break;
-                }
-            }
-            url = "jdbc:sqlite:card.s3db"; // + fileName;
-            CardDAO.configure();
-            start();
-        }
-
-        static void start() {
-            try (Scanner scanner = new Scanner(System.in)) {
-                while (true) {
-                    Map<String, Card> cards = CardDAO.getCardMap();
-                    System.out.println("1. Create an account\n" +
-                            "2. Log into account\n" +
-                            "0. Exit");
-                    switch (scanner.nextInt()) {
-                        case 1:
-                            while (true) {
-                                Card card = new Card();
-                                if (cards.containsKey(card.getCardNumber())) {
-                                    continue;
-                                }
-                                CardDAO.save(card);
-                                System.out.println("Your card has been created");
-                                System.out.println("Your card number:");
-                                System.out.println(card.getCardNumber());
-                                System.out.println("Your card PIN:");
-                                System.out.println(card.getPIN());
-                                break;
-                            }
-                            break;
-                        case 2:
-                            System.out.println("Enter your card number:");
-                            String cardNumber = scanner.next();
-                            System.out.println("Enter your PIN:");
-                            int pin = scanner.nextInt();
-                            if (cards.containsKey(cardNumber)) {
-                                if (cards.get(cardNumber).getPIN() == pin) {
-                                    logged(cards.get(cardNumber));
-                                } else {
-                                    System.out.println("Wrong card number or PIN!");
-                                }
-                            } else {
-                                System.out.println("Wrong card number or PIN!");
-                            }
-                            break;
-                        case 0:
-                            System.out.println("Bye!");
-                            System.exit(0);
-
-                    }
-                }
-            }
-        }
-
-        private static void logged(Card card) {
-            System.out.println("You have successfully logged in!");
-            try (Scanner scanner = new Scanner(System.in)) {
-                System.out.println("1. Balance\n" +
-                        "2. Log out\n" +
-                        "0. Exit");
-                int choice = -1;
-                while (choice != 2) {
-                    choice = scanner.nextInt();
-                    switch (choice) {
-                        case 1:
-                            System.out.println("Balance: " + card.getBalance());
-                            break;
-                        case 2:
-                            System.out.println("You have successfully logged out!");
-                            break;
-                        case 0:
-                            System.out.println("Bye!");
-                            System.exit(0);
-                    }
-                }
-            }
-        }
-    }
-  learner_created: false
 - name: test/SimpleBankSystemTest.java
   visible: false
   text: |
@@ -866,6 +770,195 @@ files:
 
     }
   learner_created: true
+- name: src/banking/utils/LuhnCalculator.java
+  visible: true
+  text: |
+    package banking.utils;
+
+    import java.util.Arrays;
+
+    public class LuhnCalculator {
+
+        private static int calculateControlNumber(int[] numbers) {
+            int[] calculations = new int[numbers.length];
+
+            for (int i = numbers.length - 1; i >= 0; i-=2) {
+                if (numbers[i] * 2 > 9) {
+                    calculations[i] = numbers[i] * 2 - 9;
+                } else {
+                    calculations[i] = numbers[i] * 2;
+                }
+            }
+
+            for (int i = numbers.length - 2; i >= 0; i-=2) {
+                calculations[i] = numbers[i];
+            }
+
+            return Arrays.stream(calculations).sum();
+        }
+
+        private static int calculateCheckSum(int control) {
+            return control % 10 == 0 ? 0 : 10 - control % 10;
+        }
+
+        public static int getCheckSum(String inn, int[] accNum) {
+            int[] concatNum = new int[accNum.length + 6];
+
+            int[] innArr =
+                    Arrays.stream(inn.split(""))
+                        .mapToInt(Integer::parseInt)
+                        .toArray();
+
+            System.arraycopy(innArr, 0, concatNum, 0, 5);
+            System.arraycopy(accNum, 0, concatNum, 6, 9);
+
+            return calculateCheckSum(calculateControlNumber(concatNum));
+        }
+
+        public static boolean validateCheckSum(int[] cardNumber) {
+            int[] numberMinusLast = new int[cardNumber.length - 1];
+            System.arraycopy(cardNumber, 0,numberMinusLast, 0, cardNumber.length - 1);
+            return cardNumber[15] == calculateCheckSum(calculateControlNumber(numberMinusLast));
+        }
+    }
+  learner_created: true
+- name: src/banking/Main.java
+  visible: true
+  text: |-
+    package banking;
+
+    import java.util.Map;
+    import java.util.Scanner;
+
+    public class Main {
+        public static String url;
+
+        public static void main(String[] args) {
+            String fileName = "";
+            for (int i = 0; i < args.length; i++) {
+                if (i % 2 == 0 && args[i].equals("-fileName")) {
+                    fileName = args[i + 1];
+                    break;
+                }
+            }
+            url = "jdbc:sqlite:card.s3db"; // + fileName;
+            CardDAO.configure();
+            start();
+        }
+
+        static void start() {
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (true) {
+                    Map<String, Card> cards = CardDAO.getCardMap();
+                    System.out.println("1. Create an account\n" +
+                            "2. Log into account\n" +
+                            "0. Exit");
+                    switch (scanner.nextInt()) {
+                        case 1:
+                            while (true) {
+                                Card card = new Card();
+                                if (cards.containsKey(card.getCardNumber())) {
+                                    continue;
+                                }
+                                CardDAO.save(card);
+                                System.out.println("Your card has been created");
+                                System.out.println("Your card number:");
+                                System.out.println(card.getCardNumber());
+                                System.out.println("Your card PIN:");
+                                System.out.println(card.getPIN());
+                                break;
+                            }
+                            break;
+                        case 2:
+                            System.out.println("Enter your card number:");
+                            String cardNumber = scanner.next();
+                            System.out.println("Enter your PIN:");
+                            int pin = scanner.nextInt();
+                            if (cards.containsKey(cardNumber)) {
+                                if (cards.get(cardNumber).getPIN() == pin) {
+                                    logged(cards.get(cardNumber));
+                                } else {
+                                    System.out.println("Wrong card number or PIN!");
+                                }
+                            } else {
+                                System.out.println("Wrong card number or PIN!");
+                            }
+                            break;
+                        case 0:
+                            System.out.println("Bye!");
+                            System.exit(0);
+
+                    }
+                }
+            }
+        }
+
+        private static void logged(Card card) {
+            System.out.println("You have successfully logged in!");
+            try (Scanner scanner = new Scanner(System.in)) {
+                System.out.println("1. Balance\n" +
+                        "2. Log out\n" +
+                        "0. Exit");
+                int choice = -1;
+                while (choice != 2) {
+                    choice = scanner.nextInt();
+                    switch (choice) {
+                        case 1:
+                            System.out.println("Balance: " + card.getBalance());
+                            break;
+                        case 2:
+                            System.out.println("You have successfully logged out!");
+                            break;
+                        case 0:
+                            System.out.println("Bye!");
+                            System.exit(0);
+                    }
+                }
+            }
+        }
+    }
+  learner_created: false
+- name: src/banking/repository/AccountRepository.java
+  visible: true
+  text: "package banking.repository;\n\nimport banking.entities.Account;\nimport org.sqlite.SQLiteDataSource;\n\
+    \nimport java.sql.ResultSet;\nimport java.sql.SQLException;\nimport java.sql.Statement;\n\
+    import java.util.Optional;\n\npublic class AccountRepository {\n    private static\
+    \ AccountRepository instance;\n\n    private static final String dbFileName =\
+    \ \"card.s3db\";\n\n    private static final String CREATE = \"CREATE TABLE IF\
+    \ NOT EXISTS card (\\n\"\n            + \"\tid integer PRIMARY KEY,\\n\"\n   \
+    \         + \"\tnumber text NOT NULL,\\n\"\n            + \"\tpin text NOT NULL,\\\
+    n\"\n            + \" balance integer\\n\"\n            + \");\";\n\n    private\
+    \ final SQLiteDataSource dataSource;\n\n\n    public static AccountRepository\
+    \ getInstance() {\n        if (instance == null) {\n            synchronized (AccountRepository.class)\
+    \ {\n                if (instance == null) {\n                    instance = new\
+    \ AccountRepository();\n                }\n            }\n        }\n        return\
+    \ instance;\n    }\n\n    private AccountRepository() {\n        if (instance\
+    \ != null) {\n            throw new RuntimeException(\"use getInstance() method\
+    \ to create\");\n        }\n        this.dataSource = new SQLiteDataSource();\n\
+    \        this.dataSource.setUrl(\"jdbc:sqlite:\" + dbFileName);\n        createTable();\n\
+    \    }\n\n    private void createTable() {\n        try (Statement statement =\
+    \ this.dataSource.getConnection().createStatement()) {\n            statement.executeUpdate(CREATE);\n\
+    \n        } catch (SQLException e) {\n            e.printStackTrace();\n     \
+    \   }\n    }\n\n\n    public Account createAccount() {\n        Account generatedAccount\
+    \ = Account.generateNewAccount();\n        String sql = \"INSERT INTO card(number,\
+    \ pin, balance) VALUES \" +\n                String.format(\"('%s', '%s', %d)\"\
+    ,\n                generatedAccount.getCardNumber(),\n                generatedAccount.getPin(),\n\
+    \                generatedAccount.getBalance());\n\n        try (Statement statement\
+    \ = this.dataSource.getConnection().createStatement()) {\n            statement.executeUpdate(sql);\n\
+    \            System.out.println(\"\\nYour card has been created\");\n        \
+    \    generatedAccount.printDetails();\n        } catch (SQLException e) {\n  \
+    \          e.printStackTrace();\n        }\n        return generatedAccount;\n\
+    \    }\n\n    public Optional<Account> readOne(String cardNumberInput, String\
+    \ pinInput) {\n        String sql = \"SELECT * FROM card WHERE \" +\n        \
+    \        String.format(\"number = %s AND pin = %s\", cardNumberInput, pinInput);\n\
+    \n        try (Statement statement = this.dataSource.getConnection().createStatement();\n\
+    \             ResultSet resultSet = statement.executeQuery(sql)) {\n         \
+    \   String number = resultSet.getString(\"number\");\n            String pin =\
+    \ resultSet.getString(\"pin\");\n            int balance = resultSet.getInt(\"\
+    balance\");\n\n            return Optional.of(new Account(number, pin, balance));\n\
+    \        } catch (SQLException e) {\n            e.printStackTrace();\n      \
+    \  }\n        return Optional.empty();\n    }\n\n}\n"
+  learner_created: true
 - name: src/banking/ui/Menu.java
   visible: true
   text: |
@@ -982,99 +1075,6 @@ files:
         }
     }
   learner_created: true
-- name: src/banking/utils/LuhnCalculator.java
-  visible: true
-  text: |
-    package banking.utils;
-
-    import java.util.Arrays;
-
-    public class LuhnCalculator {
-
-        private static int calculateControlNumber(int[] numbers) {
-            int[] calculations = new int[numbers.length];
-
-            for (int i = numbers.length - 1; i >= 0; i-=2) {
-                if (numbers[i] * 2 > 9) {
-                    calculations[i] = numbers[i] * 2 - 9;
-                } else {
-                    calculations[i] = numbers[i] * 2;
-                }
-            }
-
-            for (int i = numbers.length - 2; i >= 0; i-=2) {
-                calculations[i] = numbers[i];
-            }
-
-            return Arrays.stream(calculations).sum();
-        }
-
-        private static int calculateCheckSum(int control) {
-            return control % 10 == 0 ? 0 : 10 - control % 10;
-        }
-
-        public static int getCheckSum(String inn, int[] accNum) {
-            int[] concatNum = new int[accNum.length + 6];
-
-            int[] innArr =
-                    Arrays.stream(inn.split(""))
-                        .mapToInt(Integer::parseInt)
-                        .toArray();
-
-            System.arraycopy(innArr, 0, concatNum, 0, 5);
-            System.arraycopy(accNum, 0, concatNum, 6, 9);
-
-            return calculateCheckSum(calculateControlNumber(concatNum));
-        }
-
-        public static boolean validateCheckSum(int[] cardNumber) {
-            int[] numberMinusLast = new int[cardNumber.length - 1];
-            System.arraycopy(cardNumber, 0,numberMinusLast, 0, cardNumber.length - 1);
-            return cardNumber[15] == calculateCheckSum(calculateControlNumber(numberMinusLast));
-        }
-    }
-  learner_created: true
-- name: src/banking/repository/AccountRepository.java
-  visible: true
-  text: "package banking.repository;\n\nimport banking.entities.Account;\nimport org.sqlite.SQLiteDataSource;\n\
-    \nimport java.sql.ResultSet;\nimport java.sql.SQLException;\nimport java.sql.Statement;\n\
-    import java.util.Optional;\n\npublic class AccountRepository {\n    private static\
-    \ AccountRepository instance;\n\n    private static final String dbFileName =\
-    \ \"card.s3db\";\n\n    private static final String CREATE = \"CREATE TABLE IF\
-    \ NOT EXISTS card (\\n\"\n            + \"\tid integer PRIMARY KEY,\\n\"\n   \
-    \         + \"\tnumber text NOT NULL,\\n\"\n            + \"\tpin text NOT NULL,\\\
-    n\"\n            + \" balance integer\\n\"\n            + \");\";\n\n    private\
-    \ final SQLiteDataSource dataSource;\n\n\n    public static AccountRepository\
-    \ getInstance() {\n        if (instance == null) {\n            synchronized (AccountRepository.class)\
-    \ {\n                if (instance == null) {\n                    instance = new\
-    \ AccountRepository();\n                }\n            }\n        }\n        return\
-    \ instance;\n    }\n\n    private AccountRepository() {\n        if (instance\
-    \ != null) {\n            throw new RuntimeException(\"use getInstance() method\
-    \ to create\");\n        }\n        this.dataSource = new SQLiteDataSource();\n\
-    \        this.dataSource.setUrl(\"jdbc:sqlite:\" + dbFileName);\n        createTable();\n\
-    \    }\n\n    private void createTable() {\n        try (Statement statement =\
-    \ this.dataSource.getConnection().createStatement()) {\n            statement.executeUpdate(CREATE);\n\
-    \n        } catch (SQLException e) {\n            e.printStackTrace();\n     \
-    \   }\n    }\n\n\n    public Account createAccount() {\n        Account generatedAccount\
-    \ = Account.generateNewAccount();\n        String sql = \"INSERT INTO card(number,\
-    \ pin, balance) VALUES \" +\n                String.format(\"('%s', '%s', %d)\"\
-    ,\n                generatedAccount.getCardNumber(),\n                generatedAccount.getPin(),\n\
-    \                generatedAccount.getBalance());\n\n        try (Statement statement\
-    \ = this.dataSource.getConnection().createStatement()) {\n            statement.executeUpdate(sql);\n\
-    \            System.out.println(\"\\nYour card has been created\");\n        \
-    \    generatedAccount.printDetails();\n        } catch (SQLException e) {\n  \
-    \          e.printStackTrace();\n        }\n        return generatedAccount;\n\
-    \    }\n\n    public Optional<Account> readOne(String cardNumberInput, String\
-    \ pinInput) {\n        String sql = \"SELECT * FROM card WHERE \" +\n        \
-    \        String.format(\"number = %s AND pin = %s\", cardNumberInput, pinInput);\n\
-    \n        try (Statement statement = this.dataSource.getConnection().createStatement();\n\
-    \             ResultSet resultSet = statement.executeQuery(sql)) {\n         \
-    \   String number = resultSet.getString(\"number\");\n            String pin =\
-    \ resultSet.getString(\"pin\");\n            int balance = resultSet.getInt(\"\
-    balance\");\n\n            return Optional.of(new Account(number, pin, balance));\n\
-    \        } catch (SQLException e) {\n            e.printStackTrace();\n      \
-    \  }\n        return Optional.empty();\n    }\n\n}\n"
-  learner_created: true
 - name: src/banking/service/AccountService.java
   visible: true
   text: |
@@ -1106,10 +1106,9 @@ feedback_link: https://hyperskill.org/projects/93/stages/518/implement#comment
 status: Failed
 feedback:
   message: |-
-    Wrong answer in test #10
+    Wrong answer in test #11
 
-    Account balance int the database is wrong after adding income.
-    Expected 10000
+    You should not allow a transfer if there is not enough money in the account to complete it. You should print &#39;Not enough money!&#39;
 
     Please find below the output of your program during this failed test.
     Note that the &#39;&gt;&#39; character indicates the beginning of the input line.
@@ -1125,9 +1124,20 @@ feedback:
 
     Your card has been created
     Your card number:
-    4000001486878424
+    4000003332607528
     Your card PIN:
-    1872
+    0813
+
+    0. Exit
+    1. Create an account
+    2. Log into account
+    &gt; 1
+
+    Your card has been created
+    Your card number:
+    4000006282878031
+    Your card PIN:
+    5088
 
     0. Exit
     1. Create an account
@@ -1135,26 +1145,55 @@ feedback:
     &gt; 2
 
     Enter your card number:
-    &gt;&gt; 4000001486878424
+    &gt;&gt; 4000006282878031
     Enter your PIN:
-    &gt;&gt; 1872
+    &gt;&gt; 5088
 
     You have successfully logged in!
 
     0. Exit
     1. Balance
-    2. Log out
-    &gt; 2
-    You have successfully logged out
+    2. Add income
+    3. Do transfer
+    4. Close account
+    5. Log out
+    &gt; 3
+    Transfer
+    Enter card number:
+    &gt; 2000007269641764
+    CHECK SUM: 8
+    Probably you made a mistake in the card number. Please try again!
     0. Exit
-    1. Create an account
-    2. Log into account
-    &gt; 10000
-    Inappropriate input
+    1. Balance
+    2. Add income
+    3. Do transfer
+    4. Close account
+    5. Log out
+    &gt; 3
+    Transfer
+    Enter card number:
+    &gt; 2000007269641768
+    CHECK SUM: 8
+    Such a card does not exist.
     0. Exit
-    1. Create an account
-    2. Log into account
-    &gt; 0
-    Bye!
-  time: Mon, 18 Oct 2021 08:29:08 UTC
+    1. Balance
+    2. Add income
+    3. Do transfer
+    4. Close account
+    5. Log out
+    &gt; 3
+    Transfer
+    Enter card number:
+    &gt; 4000003332607528
+    CHECK SUM: 8
+    Enter how much money you want to transfer:
+    &gt; 100000
+    Success!
+    0. Exit
+    1. Balance
+    2. Add income
+    3. Do transfer
+    4. Close account
+    5. Log out
+  time: Mon, 18 Oct 2021 09:57:44 UTC
 record: 4

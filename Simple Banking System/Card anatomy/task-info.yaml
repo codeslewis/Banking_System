@@ -239,28 +239,28 @@ files:
     }
 
   learner_created: false
-- name: src/banking/Account.java
+- name: src/banking/AuthManager.java
   visible: true
   learner_created: true
 - name: src/banking/PIN.java
   visible: true
   learner_created: true
-- name: src/banking/AccountNumber.java
+- name: src/banking/AccountMenu.java
   visible: true
   learner_created: true
 - name: src/banking/MainMenu.java
   visible: true
   learner_created: true
-- name: src/banking/AccountMenu.java
-  visible: true
-  learner_created: true
-- name: src/banking/AuthManager.java
-  visible: true
-  learner_created: true
-- name: src/banking/Menu.java
+- name: src/banking/Account.java
   visible: true
   learner_created: true
 - name: src/banking/NumberAsIntArray.java
+  visible: true
+  learner_created: true
+- name: src/banking/AccountNumber.java
+  visible: true
+  learner_created: true
+- name: src/banking/Menu.java
   visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/515/implement#comment

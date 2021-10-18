@@ -298,6 +298,9 @@ files:
         }
     }
   learner_created: false
+- name: src/banking/entities/PIN.java
+  visible: true
+  learner_created: true
 - name: src/banking/AuthManager.java
   visible: true
   text: |
@@ -341,22 +344,13 @@ files:
         }
     }
   learner_created: false
-- name: src/banking/LuhnCalculator.java
-  visible: true
-  learner_created: true
-- name: src/banking/entities/Account.java
-  visible: true
-  learner_created: true
 - name: src/banking/entities/AccountNumber.java
   visible: true
   learner_created: true
-- name: src/banking/entities/PIN.java
+- name: src/banking/entities/Pin.java
   visible: true
   learner_created: true
-- name: src/banking/repository/AccountRepository.java
-  visible: true
-  learner_created: true
-- name: src/banking/ui/AccountMenu.java
+- name: src/banking/LuhnCalculator.java
   visible: true
   learner_created: true
 - name: src/banking/ui/MainMenu.java
@@ -365,7 +359,13 @@ files:
 - name: src/banking/ui/Menu.java
   visible: true
   learner_created: true
-- name: src/banking/entities/Pin.java
+- name: src/banking/ui/AccountMenu.java
+  visible: true
+  learner_created: true
+- name: src/banking/entities/Account.java
+  visible: true
+  learner_created: true
+- name: src/banking/repository/AccountRepository.java
   visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/516/implement#comment
