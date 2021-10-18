@@ -59,6 +59,7 @@ public class AccountRepository {
         while (rowsAffected == 0) {
             try (Connection connection = DriverManager.getConnection(URL)) {
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    connection.setAutoCommit(false);
                     statement.setString(1, generatedAccount.getCardNumber());
                     statement.setString(2, generatedAccount.getPin());
                     statement.setInt(3, generatedAccount.getBalance());
@@ -66,8 +67,12 @@ public class AccountRepository {
                     if (rowsAffected == 0) {
                         generatedAccount = Account.generateNewAccount();
                     }
+                    connection.commit();
                     System.out.println("\nYour card has been created");
                     generatedAccount.printDetails();
+                } catch (SQLException e) {
+                    connection.rollback();
+                    throw e;
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -81,6 +86,7 @@ public class AccountRepository {
 
         try (Connection connection = DriverManager.getConnection(URL)) {
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                connection.setAutoCommit(false);
                 statement.setString(1, cardNumberInput);
                 statement.setString(2, pinInput);
                 ResultSet resultSet = statement.executeQuery();
@@ -89,8 +95,11 @@ public class AccountRepository {
                 String pin = resultSet.getString("pin");
                 int balance = resultSet.getInt("balance");
 
+                connection.commit();
                 return Optional.of(new Account(number, pin, balance));
-
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
             }
         } catch (SQLException e) {
             e.printStackTrace();
