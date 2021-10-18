@@ -1,7 +1,6 @@
 package banking.ui;
 
 import banking.entities.Account;
-import banking.repository.AccountRepository;
 import banking.service.AccountService;
 
 import java.util.Optional;
@@ -10,12 +9,10 @@ import java.util.Scanner;
 public class Menu {
     private static final Scanner stdin = new Scanner(System.in);
 
-    private final AccountRepository repository;
     private final AccountService service;
 
     public Menu() {
         this.service = new AccountService();
-        this.repository = AccountRepository.getInstance();
     }
 
     public void mainMenu() {
@@ -26,7 +23,6 @@ public class Menu {
                 choice = MainMenu.values()[Integer.parseInt(stdin.nextLine())];
                 switch (choice) {
                     case NEW:
-//                        repository.createAccount();
                         service.newAccount();
                         break;
                     case LOGIN:
@@ -78,7 +74,6 @@ public class Menu {
         System.out.println("Enter your PIN:");
         System.out.print(">");
         String pinNumber = stdin.nextLine();
-        return repository.readOne(cardNumber, pinNumber);
-//        return service.findAccount(cardNumber, pinNumber);
+        return service.findAccount(cardNumber, pinNumber);
     }
 }
