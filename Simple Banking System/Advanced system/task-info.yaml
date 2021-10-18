@@ -97,154 +97,6 @@ files:
         }
     }
   learner_created: false
-- name: src/banking/Card.java
-  visible: true
-  text: |
-    package banking;
-
-    import java.util.Random;
-
-    public class Card {
-        private String MII = "4";
-        private String BIN = MII + "00000";
-        private int accountId;
-        private int checkSum;
-        private String cardNumber;
-        private int balance = 0;
-        private int PIN;
-
-        public Card(String cardNumber, int PIN, int balance) {
-            this.cardNumber = cardNumber;
-            this.balance = balance;
-            this.PIN = PIN;
-        }
-
-        public Card() {
-            Random random = new Random();
-            accountId = random.nextInt(1_000_000_000 - 100_000_000) + 100_000_000;
-            String[] number = ("" + BIN + accountId).split("");
-            int[] digits = new int[number.length];
-            int sum = 0;
-            for (int i = 0; i < number.length; i++) {
-                digits[i] = Integer.parseInt(number[i]);
-                if (i % 2 == 0) {
-                    digits[i] *= 2;
-                }
-                if (digits[i] > 9) {
-                    digits[i] -= 9;
-                }
-                sum += digits[i];
-            }
-            if (sum % 10 != 0) {
-                checkSum = 10 - (sum % 10);
-            }
-            PIN = random.nextInt(10000 - 1000) + 1000;
-            cardNumber = BIN + accountId + checkSum;
-        }
-
-        public String getCardNumber() {
-            return cardNumber;
-        }
-
-        public int getBalance() {
-            return balance;
-        }
-
-        public void setBalance(int balance) {
-            this.balance = balance;
-        }
-
-        public int getPIN() {
-            return PIN;
-        }
-
-        public void setPIN(int PIN) {
-            this.PIN = PIN;
-        }
-    }
-  learner_created: false
-- name: src/banking/CardDAO.java
-  visible: true
-  text: |
-    package banking;
-
-    import org.sqlite.SQLiteDataSource;
-
-    import java.sql.*;
-    import java.util.HashMap;
-    import java.util.Map;
-
-    public class CardDAO {
-        public static Connection getConnection() {
-            SQLiteDataSource dataSource = new SQLiteDataSource();
-            dataSource.setUrl(Main.url);
-            Connection con = null;
-            try {
-                con = dataSource.getConnection();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return con;
-        }
-
-        public static void configure() {
-            try (Connection con = getConnection()) {
-                System.out.println("connection setup");
-                try (Statement statement = con.createStatement()) {
-                    statement.execute("CREATE TABLE IF NOT EXISTS card (" +
-                            "id INT PRIMARY KEY," +
-                            "number VARCHAR(16)," +
-                            "pin VARCHAR(4)," +
-                            "balance INT DEFAULT 0);");
-
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public static int save(Card card) {
-            int status = 0;
-            try (Connection con = getConnection()) {
-                try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO card (number, pin, balance) VALUES (?, ?, ?)")) {
-                    ps.setString(1, card.getCardNumber());
-                    ps.setString(2, String.valueOf(card.getPIN()));
-                    ps.setInt(3, card.getBalance());
-                    status = ps.executeUpdate();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return status;
-        }
-
-        public static Map<String, Card> getCardMap() {
-            Map<String, Card> map = new HashMap();
-            try (Connection con = getConnection()) {
-                try (Statement statement = con.createStatement()) {
-                    ResultSet rs = statement.executeQuery("SELECT * FROM card");
-                    while (rs.next()) {
-                        String number = rs.getString("number");
-                        int pin = Integer.parseInt(rs.getString("PIN"));
-                        int balance = rs.getInt("balance");
-                        Card card = new Card(number, pin, balance);
-                        map.put(number, card);
-                    }
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return map;
-        }
-    }
-  learner_created: false
 - name: test/SimpleBankSystemTest.java
   visible: false
   text: |
@@ -910,6 +762,346 @@ files:
         }
     }
   learner_created: false
+- name: src/banking/entities/Account.java
+  visible: true
+  text: |
+    package banking.entities;
+
+    import banking.utils.LuhnCalculator;
+
+    import java.util.Arrays;
+    import java.util.Random;
+    import java.util.stream.Collectors;
+
+    public class Account {
+        private static final String INN = "400000";
+        private String cardNumber;
+        private String pin;
+
+        private int balance;
+
+        public Account(String cardNumber, String pin, int balance) {
+            this.cardNumber = cardNumber;
+            this.pin = pin;
+            this.balance = balance;
+        }
+
+        private Account() {}
+
+        public static Account generateNewAccount() {
+            Account result = new Account();
+            result.cardNumber = generateCardNumber();
+            result.pin = generatePin();
+            return result;
+        }
+
+        private static String generatePin() {
+            return new Random()
+                    .ints(4, 0, 9)
+                    .mapToObj(String::valueOf)
+                    .collect(Collectors.joining());
+        }
+
+        private static String generateCardNumber() {
+            int[] digits = new Random()
+                    .ints(9,0,9)
+                    .toArray();
+            int checkDigit = LuhnCalculator.getCheckSum(INN, digits);
+            return INN + Arrays.stream(digits)
+                    .mapToObj(String::valueOf)
+                    .collect(Collectors.joining()) +
+                    checkDigit;
+        }
+
+
+        public String getCardNumber() {
+            return cardNumber;
+        }
+
+        public String getPin() {
+            return pin;
+        }
+
+        public int getBalance() {
+            return balance;
+        }
+
+        public void printDetails() {
+            System.out.println("Your card number:");
+            System.out.println(getCardNumber());
+            System.out.println("Your card PIN:");
+            System.out.println(getPin());
+            System.out.println();
+        }
+
+    }
+  learner_created: true
+- name: src/banking/ui/MainMenu.java
+  visible: true
+  text: |
+    package banking.ui;
+
+    import java.util.EnumSet;
+
+    public enum MainMenu {
+        EXIT("0. Exit"),
+        NEW("1. Create an account"),
+        LOGIN("2. Log into account");
+
+        private final String menuDefinition;
+
+        MainMenu(String menuDefinition) {
+            this.menuDefinition = menuDefinition;
+        }
+
+        public String getMenuDefinition() {
+            return menuDefinition;
+        }
+
+        public static void printMenu() {
+            EnumSet.allOf(MainMenu.class)
+                    .forEach(item -> System.out.println(item.getMenuDefinition()));
+        }
+
+
+    }
+  learner_created: true
+- name: src/banking/ui/Menu.java
+  visible: true
+  text: |
+    package banking.ui;
+
+    import banking.entities.Account;
+    import banking.repository.AccountRepository;
+    import banking.service.AccountService;
+
+    import java.util.Optional;
+    import java.util.Scanner;
+
+    public class Menu {
+        private static final Scanner stdin = new Scanner(System.in);
+
+        private final AccountRepository repository;
+        private final AccountService service;
+
+        public Menu() {
+            this.service = new AccountService();
+            this.repository = AccountRepository.getInstance();
+        }
+
+        public void mainMenu() {
+            MainMenu choice;
+            while(true) {
+                try {
+                    MainMenu.printMenu();
+                    choice = MainMenu.values()[Integer.parseInt(stdin.nextLine())];
+                    switch (choice) {
+                        case NEW:
+    //                        repository.createAccount();
+                            service.newAccount();
+                            break;
+                        case LOGIN:
+                            Optional<Account> current = attemptLogin();
+                            if (current.isPresent()) {
+                                System.out.println("\nYou have successfully logged in!\n");
+                                accountMenu(current.get());
+                            } else {
+                                System.out.println("\nWrong card number or PIN!\n");
+                            }
+                            break;
+                        case EXIT:
+                            System.out.println("Bye!");
+                            return;
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Inappropriate input");
+                }
+            }
+        }
+
+        public void accountMenu(Account account) {
+            AccountMenu choice;
+            while(true) {
+                try {
+                    AccountMenu.printMenu();
+                    choice = AccountMenu.values()[Integer.parseInt(stdin.nextLine())];
+                    switch (choice) {
+                        case BALANCE:
+                            System.out.println("Balance: " + account.getBalance());;
+                            break;
+                        case LOGOUT:
+                            System.out.println("You have successfully logged out");
+                            return;
+                        case EXIT:
+                            System.out.println("Bye!");
+                            System.exit(0);
+                    }
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Inappropriate input");
+                }
+            }
+        }
+
+        private Optional<Account> attemptLogin() {
+            System.out.println("\nEnter your card number:");
+            System.out.print(">");
+            String cardNumber = stdin.nextLine();
+            System.out.println("Enter your PIN:");
+            System.out.print(">");
+            String pinNumber = stdin.nextLine();
+            return repository.readOne(cardNumber, pinNumber);
+    //        return service.findAccount(cardNumber, pinNumber);
+        }
+    }
+  learner_created: true
+- name: src/banking/ui/AccountMenu.java
+  visible: true
+  text: |
+    package banking.ui;
+
+    import java.util.EnumSet;
+
+    public enum AccountMenu {
+        EXIT("0. Exit"),
+        BALANCE("1. Balance"),
+        LOGOUT("2. Log out");
+
+        private final String menuDefinition;
+
+        AccountMenu(String menuDefinition) {
+            this.menuDefinition = menuDefinition;
+        }
+
+        public String getMenuDefinition() {
+            return menuDefinition;
+        }
+
+        public static void printMenu() {
+            EnumSet.allOf(AccountMenu.class)
+                    .forEach(item -> System.out.println(item.getMenuDefinition()));
+        }
+    }
+  learner_created: true
+- name: src/banking/utils/LuhnCalculator.java
+  visible: true
+  text: |
+    package banking.utils;
+
+    import java.util.Arrays;
+
+    public class LuhnCalculator {
+
+        private static int calculateControlNumber(int[] numbers) {
+            int[] calculations = new int[numbers.length];
+
+            for (int i = numbers.length - 1; i >= 0; i-=2) {
+                if (numbers[i] * 2 > 9) {
+                    calculations[i] = numbers[i] * 2 - 9;
+                } else {
+                    calculations[i] = numbers[i] * 2;
+                }
+            }
+
+            for (int i = numbers.length - 2; i >= 0; i-=2) {
+                calculations[i] = numbers[i];
+            }
+
+            return Arrays.stream(calculations).sum();
+        }
+
+        private static int calculateCheckSum(int control) {
+            return control % 10 == 0 ? 0 : 10 - control % 10;
+        }
+
+        public static int getCheckSum(String inn, int[] accNum) {
+            int[] concatNum = new int[accNum.length + 6];
+
+            int[] innArr =
+                    Arrays.stream(inn.split(""))
+                        .mapToInt(Integer::parseInt)
+                        .toArray();
+
+            System.arraycopy(innArr, 0, concatNum, 0, 5);
+            System.arraycopy(accNum, 0, concatNum, 6, 9);
+
+            return calculateCheckSum(calculateControlNumber(concatNum));
+        }
+
+        public static boolean validateCheckSum(int[] cardNumber) {
+            int[] numberMinusLast = new int[cardNumber.length - 1];
+            System.arraycopy(cardNumber, 0,numberMinusLast, 0, cardNumber.length - 1);
+            return cardNumber[15] == calculateCheckSum(calculateControlNumber(numberMinusLast));
+        }
+    }
+  learner_created: true
+- name: src/banking/repository/AccountRepository.java
+  visible: true
+  text: "package banking.repository;\n\nimport banking.entities.Account;\nimport org.sqlite.SQLiteDataSource;\n\
+    \nimport java.sql.ResultSet;\nimport java.sql.SQLException;\nimport java.sql.Statement;\n\
+    import java.util.Optional;\n\npublic class AccountRepository {\n    private static\
+    \ AccountRepository instance;\n\n    private static final String dbFileName =\
+    \ \"card.s3db\";\n\n    private static final String CREATE = \"CREATE TABLE IF\
+    \ NOT EXISTS card (\\n\"\n            + \"\tid integer PRIMARY KEY,\\n\"\n   \
+    \         + \"\tnumber text NOT NULL,\\n\"\n            + \"\tpin text NOT NULL,\\\
+    n\"\n            + \" balance integer\\n\"\n            + \");\";\n\n    private\
+    \ final SQLiteDataSource dataSource;\n\n\n    public static AccountRepository\
+    \ getInstance() {\n        if (instance == null) {\n            synchronized (AccountRepository.class)\
+    \ {\n                if (instance == null) {\n                    instance = new\
+    \ AccountRepository();\n                }\n            }\n        }\n        return\
+    \ instance;\n    }\n\n    private AccountRepository() {\n        if (instance\
+    \ != null) {\n            throw new RuntimeException(\"use getInstance() method\
+    \ to create\");\n        }\n        this.dataSource = new SQLiteDataSource();\n\
+    \        this.dataSource.setUrl(\"jdbc:sqlite:\" + dbFileName);\n        createTable();\n\
+    \    }\n\n    private void createTable() {\n        try (Statement statement =\
+    \ this.dataSource.getConnection().createStatement()) {\n            statement.executeUpdate(CREATE);\n\
+    \n        } catch (SQLException e) {\n            e.printStackTrace();\n     \
+    \   }\n    }\n\n\n    public Account createAccount() {\n        Account generatedAccount\
+    \ = Account.generateNewAccount();\n        String sql = \"INSERT INTO card(number,\
+    \ pin, balance) VALUES \" +\n                String.format(\"('%s', '%s', %d)\"\
+    ,\n                generatedAccount.getCardNumber(),\n                generatedAccount.getPin(),\n\
+    \                generatedAccount.getBalance());\n\n        try (Statement statement\
+    \ = this.dataSource.getConnection().createStatement()) {\n            statement.executeUpdate(sql);\n\
+    \            System.out.println(\"\\nYour card has been created\");\n        \
+    \    generatedAccount.printDetails();\n        } catch (SQLException e) {\n  \
+    \          e.printStackTrace();\n        }\n        return generatedAccount;\n\
+    \    }\n\n    public Optional<Account> readOne(String cardNumberInput, String\
+    \ pinInput) {\n        String sql = \"SELECT * FROM card WHERE \" +\n        \
+    \        String.format(\"number = %s AND pin = %s\", cardNumberInput, pinInput);\n\
+    \n        try (Statement statement = this.dataSource.getConnection().createStatement();\n\
+    \             ResultSet resultSet = statement.executeQuery(sql)) {\n         \
+    \   String number = resultSet.getString(\"number\");\n            String pin =\
+    \ resultSet.getString(\"pin\");\n            int balance = resultSet.getInt(\"\
+    balance\");\n\n            return Optional.of(new Account(number, pin, balance));\n\
+    \        } catch (SQLException e) {\n            e.printStackTrace();\n      \
+    \  }\n        return Optional.empty();\n    }\n\n}\n"
+  learner_created: true
+- name: src/banking/service/AccountService.java
+  visible: true
+  text: |
+    package banking.service;
+
+    import banking.entities.Account;
+    import banking.repository.AccountRepository;
+
+    import java.util.Optional;
+
+    public class AccountService {
+
+        private final AccountRepository repository;
+
+        public AccountService() {
+            this.repository = AccountRepository.getInstance();
+        }
+
+        public Account newAccount() {
+            return repository.createAccount();
+        }
+
+        public Optional<Account> findAccount(String cardNumber, String pinNumber) {
+            return repository.readOne(cardNumber, pinNumber);
+        }
+    }
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/518/implement#comment
 status: Unchecked
-record: -1
+record: 4

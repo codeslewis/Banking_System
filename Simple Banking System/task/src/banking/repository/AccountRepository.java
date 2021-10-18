@@ -3,19 +3,18 @@ package banking.repository;
 import banking.entities.Account;
 import org.sqlite.SQLiteDataSource;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Optional;
 
 public class AccountRepository {
     private static AccountRepository instance;
 
     private static final String dbFileName = "card.s3db";
+    private static final String URL = "jdbc:sqlite:card.s3db";
 
     private static final String CREATE = "CREATE TABLE IF NOT EXISTS card (\n"
             + "	id integer PRIMARY KEY,\n"
-            + "	number text NOT NULL,\n"
+            + "	number text NOT NULL UNIQUE,\n"
             + "	pin text NOT NULL,\n"
             + " balance integer\n"
             + ");";
@@ -55,36 +54,45 @@ public class AccountRepository {
 
     public Account createAccount() {
         Account generatedAccount = Account.generateNewAccount();
-        String sql = "INSERT INTO card(number, pin, balance) VALUES " +
-                String.format("('%s', '%s', %d)",
-                generatedAccount.getCardNumber(),
-                generatedAccount.getPin(),
-                generatedAccount.getBalance());
 
-        try (Statement statement = this.dataSource.getConnection().createStatement()) {
-            statement.executeUpdate(sql);
-            System.out.println("\nYour card has been created");
-            generatedAccount.printDetails();
+        String sql = "INSERT INTO card (number, pin, balance) VALUES (?, ?, ?)";
+
+        try (Connection connection = DriverManager.getConnection(URL)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, generatedAccount.getCardNumber());
+                statement.setString(2, generatedAccount.getPin());
+                statement.setInt(3, generatedAccount.getBalance());
+                statement.executeUpdate();
+                System.out.println("\nYour card has been created");
+                generatedAccount.printDetails();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return generatedAccount;
     }
 
     public Optional<Account> readOne(String cardNumberInput, String pinInput) {
-        String sql = "SELECT * FROM card WHERE " +
-                String.format("number = %s AND pin = %s", cardNumberInput, pinInput);
+        String sql = "SELECT * FROM card WHERE number = ? AND pin = ?;";
 
-        try (Statement statement = this.dataSource.getConnection().createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-            String number = resultSet.getString("number");
-            String pin = resultSet.getString("pin");
-            int balance = resultSet.getInt("balance");
+        try (Connection connection = DriverManager.getConnection(URL)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, cardNumberInput);
+                statement.setString(2, pinInput);
+                ResultSet resultSet = statement.executeQuery();
 
-            return Optional.of(new Account(number, pin, balance));
+                String number = resultSet.getString("number");
+                String pin = resultSet.getString("pin");
+                int balance = resultSet.getInt("balance");
+
+                return Optional.of(new Account(number, pin, balance));
+
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return Optional.empty();
     }
 

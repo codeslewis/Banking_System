@@ -1,0 +1,17 @@
+
+V	java:S125"<This block of commented-out lines of code should be removed.(»÷àôûÿÿÿÿ
+S	java:S106#"9Replace this use of System.out or System.err by a logger.(šñô¡ùÿÿÿÿ
+S	java:S106&"9Replace this use of System.out or System.err by a logger.(×‘×Äûÿÿÿÿ
+S	java:S106*"9Replace this use of System.out or System.err by a logger.(’²ÿ­ûÿÿÿÿ
+N	java:S106."9Replace this use of System.out or System.err by a logger.(¶ûµ«
+S	java:S106;"9Replace this use of System.out or System.err by a logger.(ÇžÐ‰ûÿÿÿÿ
+7
+java:S1116;"Remove this empty statement.(ÇžÐ‰ûÿÿÿÿ
+N	java:S106>"9Replace this use of System.out or System.err by a logger.(ø×ôÃ
+S	java:S106A"9Replace this use of System.out or System.err by a logger.(’²ÿ­ûÿÿÿÿ
+N	java:S106E"9Replace this use of System.out or System.err by a logger.(¶ûµ«
+N	java:S106K"9Replace this use of System.out or System.err by a logger.(¶Ÿ¨­
+S	java:S106L"9Replace this use of System.out or System.err by a logger.(›Äæ÷üÿÿÿÿ
+S	java:S106N"9Replace this use of System.out or System.err by a logger.(àùŽ†þÿÿÿÿ
+S	java:S106O"9Replace this use of System.out or System.err by a logger.(›Äæ÷üÿÿÿÿ
+]	java:S125R"<This block of commented-out lines of code should be removed.(Û±³Ñûÿÿÿÿ8áôëÅÈ/

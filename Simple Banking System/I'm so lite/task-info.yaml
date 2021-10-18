@@ -488,53 +488,6 @@ files:
 - name: src/banking/ui/MainMenu.java
   visible: true
   learner_created: true
-- name: src/banking/entities/PIN.java
-  visible: true
-  text: |-
-    package banking.entities;
-
-    import java.util.Arrays;
-    import java.util.Random;
-
-    public class Pin {
-        private int[] digits;
-
-        public Pin() {
-            this.digits = new Random()
-                    .ints(4, 0, 9)
-                    .toArray();
-        }
-
-        public int[] getDigits() {
-            return digits;
-        }
-
-        public void setDigits(String newPin, String newPinAgain) {
-            int[] newPinArr =
-                    Arrays.stream(newPin.split(""))
-                            .mapToInt(Integer::parseInt)
-                            .toArray();
-            int[] newPinArrAgain =
-                    Arrays.stream(newPinAgain.split(""))
-                            .mapToInt(Integer::parseInt)
-                            .toArray();
-            if (Arrays.equals(newPinArr, newPinArrAgain)) {
-                this.digits = newPinArr;
-            } else {
-                throw new IllegalArgumentException("Both PINs must match\nTry again.");
-            }
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            for (int digit : this.digits) {
-                sb.append(digit);
-            }
-            return sb.toString();
-        }
-    }
-  learner_created: true
 - name: src/banking/Main.java
   visible: true
   text: |-
@@ -551,9 +504,6 @@ files:
 - name: src/banking/ui/Menu.java
   visible: true
   learner_created: true
-- name: card.s3db
-  visible: true
-  learner_created: true
 - name: src/banking/utils/LuhnCalculator.java
   visible: true
   learner_created: true
@@ -563,9 +513,12 @@ files:
 - name: src/banking/service/AccountService.java
   visible: true
   learner_created: true
+- name: card.s3db
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/517/implement#comment
 status: Solved
 feedback:
   message: Congratulations!
-  time: Sat, 16 Oct 2021 10:52:11 UTC
+  time: Mon, 18 Oct 2021 07:12:13 UTC
 record: 2
